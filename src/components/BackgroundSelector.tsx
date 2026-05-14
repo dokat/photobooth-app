@@ -1,0 +1,65 @@
+import { Image as ImageIcon } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface Background {
+  id: string;
+  name: string;
+  src: string;
+}
+
+interface BackgroundSelectorProps {
+  backgroundsList: Background[];
+  selectedBgId: string | null;
+  setSelectedBgId: (id: string | null) => void;
+}
+
+export function BackgroundSelector({
+  backgroundsList,
+  selectedBgId,
+  setSelectedBgId,
+}: BackgroundSelectorProps) {
+  return (
+    <div className="w-full lg:w-1/4 border-t lg:border-t-0 lg:border-l border-neutral-800/50 pt-6 lg:pt-0 lg:pl-6 flex flex-col h-full min-h-0">
+      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-neutral-200 shrink-0">
+        <ImageIcon className="w-5 h-5" />
+        Arrière-plans
+      </h3>
+      
+      <ScrollArea className="flex-1 pr-4 -mr-4 h-full">
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+          {backgroundsList.map((bg) => (
+            <button
+              key={bg.id}
+              onClick={() => setSelectedBgId(bg.id)}
+              className={`relative rounded-xl overflow-hidden aspect-video border-2 transition-all duration-300 ${
+                selectedBgId === bg.id 
+                  ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-lg shadow-emerald-500/20 scale-100" 
+                  : "border-neutral-800 opacity-60 hover:opacity-100 hover:border-neutral-600 scale-95 hover:scale-100"
+              } cursor-pointer`}
+            >
+              <img src={bg.src} alt={bg.name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">
+                <span className="text-sm font-medium text-white truncate w-full text-left drop-shadow-md">
+                  {bg.name}
+                </span>
+              </div>
+            </button>
+          ))}
+          
+          <button
+            onClick={() => setSelectedBgId(null)}
+            className={`relative rounded-xl overflow-hidden aspect-video border-2 flex items-center justify-center transition-all duration-300 ${
+                selectedBgId === null
+                  ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-lg shadow-emerald-500/20 scale-100" 
+                  : "border-neutral-800 border-dashed opacity-60 hover:opacity-100 hover:border-neutral-600 scale-95 hover:scale-100"
+              } cursor-pointer`}
+          >
+            <span className="text-sm font-medium text-neutral-400 bg-neutral-900/80 px-3 py-1 rounded-full">
+              Aucun Fond
+            </span>
+          </button>
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
