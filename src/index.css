@@ -72,11 +72,5 @@
   }
   body {
     @apply text-foreground;
-    background-color: #3f2329; /* Fallback */
-    background-image: url('/backgrounds/background.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
   }
 }
