@@ -1,4 +1,6 @@
 import { RefreshCw, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useShareLogic } from "@/hooks/useShareLogic";
 
@@ -21,6 +23,14 @@ export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
     handleSendEmail,
     isValidEmail
   } = useShareLogic(capturedPhoto);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (sendSuccess) {
+      navigate('/success', { state: { email } });
+    }
+  }, [sendSuccess, navigate, email]);
 
   return (
     <div className="flex flex-col flex-1 p-6 md:p-12 pb-48 md:pb-12 h-full w-full justify-center">
@@ -58,9 +68,6 @@ export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
             </div>
             {email && !isValidEmail && (
               <p className="text-red-400 text-sm font-medium pl-2">Veuillez saisir une adresse e-mail valide.</p>
-            )}
-            {sendSuccess && (
-              <p className="text-emerald-400 text-sm font-medium pl-2">Email envoyé avec succès !</p>
             )}
           </div>
 
@@ -127,11 +134,10 @@ export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
               onClick={handleSendEmail}
               disabled={isSending || !isValidEmail || allowEmailStorage === null || allowPhotoStorage === null}
               size="lg"
-              className={`flex-1 h-16 rounded-2xl text-xl font-bold shadow-xl transition-all ${sendSuccess ? 'bg-emerald-600 hover:bg-emerald-600 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-white'
-                }`}
+              className="flex-1 h-16 rounded-2xl text-xl font-bold shadow-xl transition-all bg-emerald-500 hover:bg-emerald-400 text-white"
             >
               {isSending ? <Loader2 className="animate-spin w-6 h-6 mr-3" /> : null}
-              {sendSuccess ? "Photo envoyée !" : "Envoyer ma photo"}
+              Envoyer ma photo
             </Button>
           </div>
         </div>
