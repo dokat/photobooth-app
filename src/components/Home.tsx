@@ -6,7 +6,7 @@ export function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 flex flex-col items-center justify-center space-y-8 bg-neutral-900/50 backdrop-blur-xl border-neutral-800 shadow-2xl rounded-3xl">
         <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center">
           <Camera className="w-12 h-12 text-emerald-500" />

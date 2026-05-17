@@ -51,7 +51,7 @@ export function Photobooth() {
   }, [startCountdown]);
 
   return (
-    <div className="min-h-screen bg-neutral-950 font-sans text-neutral-100 flex flex-col items-center justify-center relative">
+    <div className="min-h-screen font-sans text-neutral-100 flex flex-col items-center justify-center relative">
 
       {/* Hidden system components */}
       <Webcam
@@ -99,7 +99,7 @@ export function Photobooth() {
           </Card>
         </div>
       ) : (
-        <div className="absolute inset-0 z-50 bg-neutral-950 flex flex-col w-full h-full p-4 md:p-12 overflow-y-auto">
+        <div className="absolute inset-0 z-50 flex flex-col w-full h-full p-4 md:p-12 overflow-y-auto">
           <ShareScreen capturedPhoto={capturedPhoto} />
         </div>
       )}

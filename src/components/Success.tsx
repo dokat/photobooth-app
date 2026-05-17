@@ -20,7 +20,7 @@ export function Success() {
   }, [countdown, navigate]);
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center p-6 md:p-12 animate-in fade-in duration-500">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 md:p-12 animate-in fade-in duration-500">
       <div className="flex flex-col items-center justify-center max-w-xl text-center space-y-8 bg-neutral-900/50 p-12 rounded-3xl border border-neutral-800 shadow-2xl backdrop-blur-xl relative overflow-hidden">
         {/* Progress bar at the top of the card */}
         <div className="absolute top-0 left-0 h-1 bg-emerald-500 transition-all duration-1000 ease-linear" style={{ width: `${(countdown / 5) * 100}%` }} />
