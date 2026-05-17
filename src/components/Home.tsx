@@ -1,12 +1,27 @@
 import { useNavigate } from "react-router-dom";
 import { Camera } from "lucide-react";
 import { Card } from "@/components/ui/card";
-
 export function Home() {
   const navigate = useNavigate();
 
+  const requestFullscreen = () => {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.warn("Unable to request fullscreen:", err);
+      });
+    }
+  };
+
+  const handleStart = () => {
+    requestFullscreen();
+    navigate("/instructions");
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div 
+      onClick={requestFullscreen} 
+      className="min-h-screen flex flex-col items-center justify-center p-4 cursor-pointer"
+    >
       <Card className="w-full max-w-md p-8 flex flex-col items-center justify-center space-y-8 bg-neutral-900/50 backdrop-blur-xl border-neutral-800 shadow-2xl rounded-3xl">
         <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center">
           <Camera className="w-12 h-12 text-emerald-500" />
@@ -18,7 +33,7 @@ export function Home() {
         </div>
 
         <button
-          onClick={() => navigate("/instructions")}
+          onClick={handleStart}
           className="w-full py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-semibold text-lg transition-all active:scale-95 shadow-lg shadow-emerald-500/25 border-none"
         >
           Commencer
