@@ -32,7 +32,7 @@ export function useShareLogic(capturedPhoto: string) {
   const sendEmail = async (filename: string) => {
     // const { data, error } = await supabase.functions.invoke('send-email', {
     const { error } = await supabase.functions.invoke('send-email', {
-      body: { filename, email },
+      body: { filename, email, newsletter: allowEmailStorage ?? false, communication: allowPhotoStorage ?? false },
     })
 
     if (error) {
