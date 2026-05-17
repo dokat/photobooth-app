@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 
 export const BACKGROUNDS = [
-  { id: "donkeykong", name: "Donkey Kong", src: `${import.meta.env.BASE_URL}backgrounds/DonkeyKong.jpg` },
-  { id: "laracroft", name: "Lara Croft", src: `${import.meta.env.BASE_URL}backgrounds/LaraCroft.jpg` },
-  { id: "minecraft", name: "Minecraft", src: `${import.meta.env.BASE_URL}backgrounds/Minecraft.jpg` },
-  { id: "rayman", name: "Rayman", src: `${import.meta.env.BASE_URL}backgrounds/Rayman.jpeg` },
+  { id: "donkeykong", name: "Donkey Kong", src: `${import.meta.env.BASE_URL}/backgrounds/DonkeyKong.jpg` },
+  { id: "laracroft", name: "Lara Croft", src: `${import.meta.env.BASE_URL}/backgrounds/LaraCroft.jpg` },
+  { id: "minecraft", name: "Minecraft", src: `${import.meta.env.BASE_URL}/backgrounds/Minecraft.jpg` },
+  { id: "rayman", name: "Rayman", src: `${import.meta.env.BASE_URL}/backgrounds/Rayman.jpeg` },
 ];
 
 export function useBackgrounds(initialBgId: string | null = BACKGROUNDS[0].id) {
