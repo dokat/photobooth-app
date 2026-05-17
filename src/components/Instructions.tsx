@@ -14,7 +14,7 @@ export function Instructions() {
                 <p>Une fois votre photo validée, entrez votre adresse mail pour la recevoir.</p>
                 <button
                     onClick={() => navigate("/photobooth")}
-                    className="w-full flex items-center gap-2 justify-center py-4 px-6 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-semibold text-lg transition-all active:scale-95 shadow-lg shadow-blue-500/25"
+                    className="w-full flex items-center gap-2 justify-center py-4 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-semibold text-lg transition-all active:scale-95 shadow-lg shadow-emerald-500/25 border-none"
                 >
                     Continuer <ArrowRight />
                 </button>
