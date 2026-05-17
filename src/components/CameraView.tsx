@@ -197,10 +197,9 @@ export function CameraView({
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-12 transition-all duration-300">
               <Button
                 onClick={startCountdown}
-                size="lg"
-                className="rounded-full w-24 h-24 bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all active:scale-90 border-none group/btn"
+                className="rounded-full w-16 h-16 bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all active:scale-90 border-none group/btn"
               >
-                <Camera className="w-12 h-12 text-white transition-transform group-hover/btn:scale-110" />
+                <Camera className="text-white transition-transform group-hover/btn:scale-110" size={16} />
               </Button>
             </div>
           )
