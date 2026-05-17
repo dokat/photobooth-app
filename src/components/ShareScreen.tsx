@@ -1,4 +1,4 @@
-import { RefreshCw, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,16 +6,14 @@ import { useShareLogic } from "@/hooks/useShareLogic";
 
 interface ShareScreenProps {
   capturedPhoto: string;
-  resetPhoto: () => void;
 }
 
-export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
+export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
   const {
     email,
     setEmail,
     isSending,
     sendSuccess,
-    setSendSuccess,
     allowEmailStorage,
     setAllowEmailStorage,
     allowPhotoStorage,
@@ -59,11 +57,10 @@ export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
-                className={`w-full h-16 bg-neutral-950 border-2 rounded-2xl px-5 text-lg text-white placeholder:text-neutral-600 focus:ring-4 outline-none transition-all ${
-                  email && !isValidEmail
+                className={`w-full h-16 bg-neutral-950 border-2 rounded-2xl px-5 text-lg text-white placeholder:text-neutral-600 focus:ring-4 outline-none transition-all ${email && !isValidEmail
                     ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
                     : "border-neutral-800 focus:border-emerald-500 focus:ring-emerald-500/20"
-                }`}
+                  }`}
               />
             </div>
             {email && !isValidEmail && (

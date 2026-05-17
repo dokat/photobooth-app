@@ -96,20 +96,11 @@ export function Photobooth() {
                 setIsValidated(false);
               }}
             />
-
-
-
           </Card>
         </div>
       ) : (
         <div className="absolute inset-0 z-50 bg-neutral-950 flex flex-col w-full h-full p-4 md:p-12 overflow-y-auto">
-          <ShareScreen
-            capturedPhoto={capturedPhoto}
-            resetPhoto={() => {
-              resetPhoto();
-              setIsValidated(false);
-            }}
-          />
+          <ShareScreen capturedPhoto={capturedPhoto} />
         </div>
       )}
     </div>
