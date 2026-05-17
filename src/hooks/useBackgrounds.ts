@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 
 export const BACKGROUNDS = [
-  { id: "cyberpunk", name: "Cyberpunk City", src: "/backgrounds/cyberpunk.png" },
-  { id: "tropical", name: "Tropical Beach", src: "/backgrounds/tropical.png" },
-  { id: "forest", name: "Magical Forest", src: "/backgrounds/forest.png" },
-  { id: "scifi", name: "Space Station", src: "/backgrounds/scifi.png" },
+  { id: "donkeykong", name: "Donkey Kong", src: "/backgrounds/DonkeyKong.jpg" },
+  { id: "laracroft", name: "Lara Croft", src: "/backgrounds/LaraCroft.jpg" },
+  { id: "minecraft", name: "Minecraft", src: "/backgrounds/Minecraft.jpg" },
+  { id: "rayman", name: "Rayman", src: "/backgrounds/Rayman.jpeg" },
 ];
 
 export function useBackgrounds(initialBgId: string | null = BACKGROUNDS[0].id) {
@@ -26,10 +26,10 @@ export function useBackgrounds(initialBgId: string | null = BACKGROUNDS[0].id) {
 
   const currentBgImage = selectedBgId ? bgImages[selectedBgId] : null;
 
-  return { 
-    selectedBgId, 
-    setSelectedBgId, 
-    currentBgImage, 
-    backgroundsList: BACKGROUNDS 
+  return {
+    selectedBgId,
+    setSelectedBgId,
+    currentBgImage,
+    backgroundsList: BACKGROUNDS
   };
 }

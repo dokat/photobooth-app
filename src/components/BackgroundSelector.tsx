@@ -38,18 +38,6 @@ export function BackgroundSelector({
               </div>
             </button>
           ))}
-
-          <button
-            onClick={() => setSelectedBgId(null)}
-            className={`relative rounded-xl overflow-hidden aspect-video border-2 flex items-center justify-center transition-all duration-300 ${selectedBgId === null
-              ? "border-emerald-500 ring-4 ring-emerald-500/20 shadow-lg shadow-emerald-500/20 scale-100"
-              : "border-neutral-800 border-dashed opacity-60 hover:opacity-100 hover:border-neutral-600 scale-95 hover:scale-100"
-              } cursor-pointer`}
-          >
-            <span className="text-sm font-medium text-neutral-400 bg-neutral-900/80 px-3 py-1 rounded-full">
-              Aucun Fond
-            </span>
-          </button>
         </div>
       </ScrollArea>
     </div>
