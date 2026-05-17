@@ -6,8 +6,10 @@ export function useShareLogic(capturedPhoto: string) {
   const [email, setEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
-  const [allowEmailStorage, setAllowEmailStorage] = useState(false);
-  const [allowPhotoStorage, setAllowPhotoStorage] = useState(false);
+  const [allowEmailStorage, setAllowEmailStorage] = useState<boolean | null>(null);
+  const [allowPhotoStorage, setAllowPhotoStorage] = useState<boolean | null>(null);
+
+  const isValidEmail = email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) !== null;
 
   const handleSendEmail = async () => {
     if (!email || !capturedPhoto) return;
@@ -35,7 +37,6 @@ export function useShareLogic(capturedPhoto: string) {
     if (error) {
       throw error;
     }
-    console.log(data)
   };
 
   const uploadPicture = async () => {
@@ -77,6 +78,7 @@ export function useShareLogic(capturedPhoto: string) {
     setAllowEmailStorage,
     allowPhotoStorage,
     setAllowPhotoStorage,
-    handleSendEmail
+    handleSendEmail,
+    isValidEmail
   };
 }

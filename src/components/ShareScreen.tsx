@@ -1,6 +1,5 @@
 import { RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useShareLogic } from "@/hooks/useShareLogic";
 
 interface ShareScreenProps {
@@ -19,12 +18,13 @@ export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
     setAllowEmailStorage,
     allowPhotoStorage,
     setAllowPhotoStorage,
-    handleSendEmail
+    handleSendEmail,
+    isValidEmail
   } = useShareLogic(capturedPhoto);
 
   return (
     <div className="flex flex-col flex-1 p-6 md:p-12 pb-48 md:pb-12 h-full w-full justify-center">
-      <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center flex-1 w-full max-w-[1600px] mx-auto">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center flex-1 w-full max-w-[1800px] mx-auto">
         {/* Left Column: Photo Preview */}
         <div className="w-full md:w-1/2 flex flex-col items-center justify-center">
           <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-neutral-800/50 bg-neutral-950">
@@ -49,56 +49,89 @@ export function ShareScreen({ capturedPhoto, resetPhoto }: ShareScreenProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
-                className="w-full h-16 bg-neutral-950 border-2 border-neutral-800 rounded-2xl pl-5 pr-32 text-lg text-white placeholder:text-neutral-600 focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                className={`w-full h-16 bg-neutral-950 border-2 rounded-2xl px-5 text-lg text-white placeholder:text-neutral-600 focus:ring-4 outline-none transition-all ${
+                  email && !isValidEmail
+                    ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                    : "border-neutral-800 focus:border-emerald-500 focus:ring-emerald-500/20"
+                }`}
               />
-              <Button
-                onClick={handleSendEmail}
-                disabled={isSending || !email}
-                className={`absolute right-2 top-2 h-12 px-6 rounded-xl text-white font-medium shadow-xl transition-all ${sendSuccess ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-emerald-500 hover:bg-emerald-400'
-                  }`}
-              >
-                {isSending ? <Loader2 className="animate-spin w-5 h-5" /> : (sendSuccess ? "Envoyé" : "Envoyer")}
-              </Button>
             </div>
+            {email && !isValidEmail && (
+              <p className="text-red-400 text-sm font-medium pl-2">Veuillez saisir une adresse e-mail valide.</p>
+            )}
             {sendSuccess && (
               <p className="text-emerald-400 text-sm font-medium pl-2">Email envoyé avec succès !</p>
             )}
           </div>
 
-          <div className="space-y-3 mb-10">
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="allowEmail"
-                checked={allowEmailStorage}
-                onCheckedChange={(checked) => setAllowEmailStorage(checked === true)}
-                className="mt-1 border-neutral-700 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-              />
-              <label
-                htmlFor="allowEmail"
-                className="text-sm text-neutral-400 font-medium leading-tight cursor-pointer hover:text-neutral-300 transition-colors"
-              >
-                J'autorise le musée à conserver mon adresse email
-              </label>
+          <div className="space-y-6 mb-10">
+            <div className="flex flex-col space-y-3">
+              <span className="text-sm text-neutral-400 font-medium leading-tight">
+                Je souhaite recevoir les actualités du musée
+              </span>
+              <div className="flex gap-6">
+                <label className="flex items-center space-x-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="allowEmail"
+                    checked={allowEmailStorage === true}
+                    onChange={() => setAllowEmailStorage(true)}
+                    className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Oui</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="allowEmail"
+                    checked={allowEmailStorage === false}
+                    onChange={() => setAllowEmailStorage(false)}
+                    className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Non</span>
+                </label>
+              </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                id="allowPhoto"
-                checked={allowPhotoStorage}
-                onCheckedChange={(checked) => setAllowPhotoStorage(checked === true)}
-                className="mt-1 border-neutral-700 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-              />
-              <label
-                htmlFor="allowPhoto"
-                className="text-sm text-neutral-400 font-medium leading-tight cursor-pointer hover:text-neutral-300 transition-colors"
-              >
-                J'autorise le musée à conserver ma photo
-              </label>
+
+            <div className="flex flex-col space-y-3">
+              <span className="text-sm text-neutral-400 font-medium leading-tight">
+                J’autorise le musée du château de Mayenne (service de Mayenne Communauté) à utiliser ma photo pour sa communication
+              </span>
+              <div className="flex gap-6">
+                <label className="flex items-center space-x-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="allowPhoto"
+                    checked={allowPhotoStorage === true}
+                    onChange={() => setAllowPhotoStorage(true)}
+                    className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Oui</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="allowPhoto"
+                    checked={allowPhotoStorage === false}
+                    onChange={() => setAllowPhotoStorage(false)}
+                    className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Non</span>
+                </label>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <Button onClick={() => { setSendSuccess(false); resetPhoto(); }} variant="secondary" size="lg" className="flex-1 h-14 rounded-2xl border-neutral-700 bg-neutral-800/80 hover:bg-neutral-700 text-lg font-medium shadow-none">
-              <RefreshCw className="mr-2 w-5 h-5" /> Reprendre
+            <Button
+              onClick={handleSendEmail}
+              disabled={isSending || !isValidEmail || allowEmailStorage === null || allowPhotoStorage === null}
+              size="lg"
+              className={`flex-1 h-16 rounded-2xl text-xl font-bold shadow-xl transition-all ${sendSuccess ? 'bg-emerald-600 hover:bg-emerald-600 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                }`}
+            >
+              {isSending ? <Loader2 className="animate-spin w-6 h-6 mr-3" /> : null}
+              {sendSuccess ? "Photo envoyée !" : "Envoyer ma photo"}
             </Button>
           </div>
         </div>
