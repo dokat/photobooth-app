@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import { Card } from "@/components/ui/card";
+import { useInactivityTimeout } from "@/hooks/useInactivityTimeout";
 
 import { useBackgrounds } from "@/hooks/useBackgrounds";
 import { usePhotobooth } from "@/hooks/usePhotobooth";
@@ -19,6 +21,12 @@ import {
 } from "@/constants";
 
 export function Photobooth() {
+  const navigate = useNavigate();
+
+  useInactivityTimeout({
+    onTimeout: () => navigate("/"),
+  });
+
   const webcamRef = useRef<Webcam | null>(null);
   const hiddenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null);

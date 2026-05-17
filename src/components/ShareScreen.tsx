@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useShareLogic } from "@/hooks/useShareLogic";
+import { useInactivityTimeout } from "@/hooks/useInactivityTimeout";
 
 interface ShareScreenProps {
   capturedPhoto: string;
@@ -29,6 +30,10 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
       navigate('/success', { state: { email } });
     }
   }, [sendSuccess, navigate, email]);
+
+  useInactivityTimeout({
+    onTimeout: () => navigate("/"),
+  });
 
   return (
     <div className="flex flex-col flex-1 p-6 md:p-12 pb-48 md:pb-12 h-full w-full justify-center">
