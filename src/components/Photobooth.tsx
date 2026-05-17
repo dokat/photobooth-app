@@ -24,6 +24,7 @@ export function Photobooth() {
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isValidated, setIsValidated] = useState(false);
 
   // Persisted settings
   const [tolerance, setTolerance] = useLocalStorage(STORAGE_KEYS.TOLERANCE, DEFAULT_TOLERANCE);
@@ -65,7 +66,7 @@ export function Photobooth() {
       />
       <canvas ref={hiddenCanvasRef} className="opacity-0 absolute pointer-events-none w-px h-px" />
 
-      {!capturedPhoto ? (
+      {!capturedPhoto || !isValidated ? (
         <div className="absolute inset-0 z-10 p-4 md:p-8 flex w-full h-full">
           <Card className="flex flex-col lg:flex-row w-full h-full shadow-2xl border-neutral-800 bg-neutral-900/50 backdrop-blur-xl overflow-hidden rounded-3xl p-6 gap-6">
 
@@ -73,6 +74,7 @@ export function Photobooth() {
               backgroundsList={backgroundsList}
               selectedBgId={selectedBgId}
               setSelectedBgId={setSelectedBgId}
+              disabled={!!capturedPhoto}
             />
             <CameraView
               webcamRef={webcamRef}
@@ -87,6 +89,12 @@ export function Photobooth() {
               setIsAdmin={setIsAdmin}
               adminPassword={adminPassword}
               setAdminPassword={setAdminPassword}
+              capturedPhoto={capturedPhoto}
+              onValidate={() => setIsValidated(true)}
+              onRetake={() => {
+                resetPhoto();
+                setIsValidated(false);
+              }}
             />
 
 
@@ -97,7 +105,10 @@ export function Photobooth() {
         <div className="absolute inset-0 z-50 bg-neutral-950 flex flex-col w-full h-full p-4 md:p-12 overflow-y-auto">
           <ShareScreen
             capturedPhoto={capturedPhoto}
-            resetPhoto={resetPhoto}
+            resetPhoto={() => {
+              resetPhoto();
+              setIsValidated(false);
+            }}
           />
         </div>
       )}

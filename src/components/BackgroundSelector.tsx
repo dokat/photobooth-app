@@ -1,4 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface Background {
   id: string;
@@ -10,16 +11,18 @@ interface BackgroundSelectorProps {
   backgroundsList: Background[];
   selectedBgId: string | null;
   setSelectedBgId: (id: string | null) => void;
+  disabled?: boolean;
 }
 
 export function BackgroundSelector({
   backgroundsList,
   selectedBgId,
   setSelectedBgId,
+  disabled,
 }: BackgroundSelectorProps) {
   return (
     <div className="w-full lg:w-1/4 border-t lg:border-t-0 lg:border-l border-neutral-800/50 pt-6 lg:pt-0 lg:pl-6 flex flex-col h-full min-h-0">
-      <ScrollArea className="flex-1 pr-4 -mr-4 h-full">
+      <ScrollArea className={cn("flex-1 pr-4 -mr-4 h-full transition-opacity duration-300", disabled && "opacity-50 pointer-events-none")}>
         <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
           {backgroundsList.map((bg) => (
             <button
