@@ -17,6 +17,9 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Prociono", "sans-serif"],
+      },
       colors: {
         white: '#d2a058',
         black: '#3f2329',

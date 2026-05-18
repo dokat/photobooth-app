@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Prociono';
+  src: url('./assets/fonts/Prociono.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -72,5 +80,6 @@
   }
   body {
     @apply text-foreground;
+    font-family: 'Prociono', sans-serif;
   }
 }
