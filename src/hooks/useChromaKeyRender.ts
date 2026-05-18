@@ -113,11 +113,12 @@ export function useChromaKeyRender({
           sourceCtx.drawImage(results.image, 0, 0, videoWidth, videoHeight);
           sourceCtx.restore();
 
-          // Apply the segmentation mask (mirrored) using destination-in operation
+          // Apply the segmentation mask (mirrored) using destination-in operation with soft edge feathering
           sourceCtx.save();
           sourceCtx.translate(videoWidth, 0);
           sourceCtx.scale(-1, 1);
           sourceCtx.globalCompositeOperation = "destination-in";
+          sourceCtx.filter = "blur(3px)";
           sourceCtx.drawImage(results.segmentationMask, 0, 0, videoWidth, videoHeight);
           sourceCtx.restore();
 
