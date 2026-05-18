@@ -16,8 +16,12 @@ export function applyChromaKey(
 ) {
   if (!width || !height) return;
 
-  // Draw the current video frame to the hidden source canvas
+  // Draw the current video frame to the hidden source canvas (mirrored)
+  sourceCtx.save();
+  sourceCtx.translate(width, 0);
+  sourceCtx.scale(-1, 1);
   sourceCtx.drawImage(video, 0, 0, width, height);
+  sourceCtx.restore();
 
   // Get the frame data
   const frame = sourceCtx.getImageData(0, 0, width, height);

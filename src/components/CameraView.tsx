@@ -63,7 +63,13 @@ export function CameraView({
     const ctx = tempCanvas.getContext("2d");
 
     if (ctx) {
-      ctx.drawImage(video, 0, 0);
+      // Mirror the video on tempCanvas so coordinates match the mirrored visual canvas
+      ctx.save();
+      ctx.translate(tempCanvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+      ctx.restore();
+
       const pixelX = Math.floor(xRatio * tempCanvas.width);
       const pixelY = Math.floor(yRatio * tempCanvas.height);
       const pixel = ctx.getImageData(pixelX, pixelY, 1, 1).data;
