@@ -17,6 +17,7 @@ import {
   DEFAULT_TOLERANCE,
   DEFAULT_KEY_COLOR,
   DEFAULT_ADMIN_PASSWORD,
+  DEFAULT_SEGMENTATION_MODE,
   STORAGE_KEYS
 } from "@/constants";
 
@@ -38,6 +39,12 @@ export function Photobooth() {
   const [tolerance, setTolerance] = useLocalStorage(STORAGE_KEYS.TOLERANCE, DEFAULT_TOLERANCE);
   const [keyColor, setKeyColor] = useLocalStorage<RGB>(STORAGE_KEYS.KEY_COLOR, DEFAULT_KEY_COLOR);
   const [adminPassword, setAdminPassword] = useLocalStorage(STORAGE_KEYS.ADMIN_PASSWORD, DEFAULT_ADMIN_PASSWORD);
+  const [segmentationMode, setSegmentationMode] = useLocalStorage<"chromakey" | "ai">(
+    STORAGE_KEYS.SEGMENTATION_MODE,
+    DEFAULT_SEGMENTATION_MODE
+  );
+
+  const [isAiLoaded, setIsAiLoaded] = useState(false);
 
   // Custom Hooks
   const { selectedBgId, setSelectedBgId, currentBgImage, backgroundsList } = useBackgrounds();
@@ -52,6 +59,9 @@ export function Photobooth() {
     keyColor,
     tolerance,
     isPaused: !!capturedPhoto,
+    segmentationMode,
+    isAiLoaded,
+    setIsAiLoaded,
   });
 
   const handleStartCountdown = useCallback(() => {
@@ -103,6 +113,9 @@ export function Photobooth() {
                 resetPhoto();
                 setIsValidated(false);
               }}
+              segmentationMode={segmentationMode}
+              setSegmentationMode={setSegmentationMode}
+              isAiLoaded={isAiLoaded}
             />
           </Card>
         </div>

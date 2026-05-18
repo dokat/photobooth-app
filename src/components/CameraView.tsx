@@ -22,6 +22,9 @@ interface CameraViewProps {
   capturedPhoto?: string | null;
   onValidate?: () => void;
   onRetake?: () => void;
+  segmentationMode: "chromakey" | "ai";
+  setSegmentationMode: (mode: "chromakey" | "ai") => void;
+  isAiLoaded: boolean;
 }
 
 export function CameraView({
@@ -40,6 +43,9 @@ export function CameraView({
   capturedPhoto,
   onValidate,
   onRetake,
+  segmentationMode,
+  setSegmentationMode,
+  isAiLoaded,
 }: CameraViewProps) {
   const [isPipetteActive, setIsPipetteActive] = useState(false);
 
@@ -116,7 +122,7 @@ export function CameraView({
         </div>
 
         <div className="flex items-center gap-3">
-          {isAdmin && (
+          {isAdmin && segmentationMode === "chromakey" && (
             <div className="flex items-center gap-3 pr-2 border-r border-neutral-800 mr-2">
               <div
                 className="w-10 h-10 rounded-full border-2 border-neutral-700 shadow-inner"
@@ -163,6 +169,14 @@ export function CameraView({
             isPipetteActive ? "cursor-crosshair scale-100" : "group-hover:scale-105"
           )}
         />
+
+        {segmentationMode === "ai" && !isAiLoaded && (
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center backdrop-blur-md animate-in fade-in duration-300">
+            <RefreshCw className="w-12 h-12 text-emerald-500 animate-spin mb-3" />
+            <span className="text-emerald-400 font-bold text-sm">Initialisation de l'IA de détourage...</span>
+            <span className="text-neutral-500 text-xs mt-1">Téléchargement du modèle de segmentation légère</span>
+          </div>
+        )}
 
         {isPipetteActive && (
           <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-emerald-500/50 text-emerald-400 text-xs font-bold animate-pulse shadow-2xl">
@@ -214,33 +228,73 @@ export function CameraView({
 
       {/* --- Admin Panel --- */}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-neutral-900/50 border border-neutral-800 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-neutral-900/50 border border-neutral-800 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-xl">
+          {/* Section 1: Mode Détourage */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-neutral-500 mb-1">
+              <Settings className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Mode Détourage</span>
+            </div>
+            <div className="flex bg-neutral-950/50 p-1.5 rounded-lg border border-neutral-800/50 h-[62px] items-center">
+              <button
+                onClick={() => setSegmentationMode("chromakey")}
+                className={cn(
+                  "flex-1 h-full rounded-md text-xs font-bold transition-all",
+                  segmentationMode === "chromakey"
+                    ? "bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                    : "text-neutral-400 hover:text-white"
+                )}
+              >
+                Fond Vert
+              </button>
+              <button
+                onClick={() => setSegmentationMode("ai")}
+                className={cn(
+                  "flex-1 h-full rounded-md text-xs font-bold transition-all",
+                  segmentationMode === "ai"
+                    ? "bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                    : "text-neutral-400 hover:text-white"
+                )}
+              >
+                IA (Sans Fond)
+              </button>
+            </div>
+          </div>
+
+          {/* Section 2: Traitement Image (Sensibilité) */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-neutral-500 mb-1">
               <SlidersHorizontal className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Traitement Image</span>
             </div>
-            <div className="flex items-center gap-4 bg-neutral-950/50 p-3 rounded-lg border border-neutral-800/50">
-              <span className="text-sm font-medium text-neutral-400 w-24">Sensibilité</span>
-              <input
-                type="range"
-                min="10"
-                max="150"
-                step="1"
-                value={tolerance}
-                onChange={(e) => setTolerance(parseFloat(e.target.value))}
-                className="flex-1 h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-colors"
-              />
-              <span className="text-xs font-mono text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded min-w-[32px] text-center">{Math.round(tolerance)}</span>
-            </div>
+            {segmentationMode === "chromakey" ? (
+              <div className="flex items-center gap-4 bg-neutral-950/50 p-3 rounded-lg border border-neutral-800/50 h-[62px]">
+                <span className="text-sm font-medium text-neutral-400 w-24">Sensibilité</span>
+                <input
+                  type="range"
+                  min="10"
+                  max="150"
+                  step="1"
+                  value={tolerance}
+                  onChange={(e) => setTolerance(parseFloat(e.target.value))}
+                  className="flex-1 h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-colors"
+                />
+                <span className="text-xs font-mono text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded min-w-[32px] text-center">{Math.round(tolerance)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center bg-neutral-950/20 p-3 rounded-lg border border-neutral-900/50 border-dashed h-[62px] text-neutral-600 text-xs font-medium italic">
+                Ajustements gérés par l'IA
+              </div>
+            )}
           </div>
 
+          {/* Section 3: Sécurité */}
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 text-neutral-500 mb-1">
               <Key className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Sécurité</span>
             </div>
-            <div className="flex items-center gap-4 bg-neutral-950/50 p-3 rounded-lg border border-neutral-800/50">
+            <div className="flex items-center gap-4 bg-neutral-950/50 p-3 rounded-lg border border-neutral-800/50 h-[62px]">
               <span className="text-sm font-medium text-neutral-400 w-24">Accès Admin</span>
               <div className="relative flex-1">
                 <input
