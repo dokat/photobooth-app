@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 
 export function Success() {
   const navigate = useNavigate();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(10);
 
   useEffect(() => {
     if (countdown === 0) {
@@ -24,7 +24,7 @@ export function Success() {
       <div className="flex flex-col items-center justify-center max-w-xl text-center space-y-8 bg-neutral-900/50 p-12 rounded-3xl border border-neutral-800 shadow-2xl backdrop-blur-xl relative overflow-hidden">
         {/* Progress bar at the top of the card */}
         <div className="absolute top-0 left-0 h-1 bg-emerald-500 transition-all duration-1000 ease-linear" style={{ width: `${(countdown / 5) * 100}%` }} />
-        
+
         <div className="w-24 h-24 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-2">
           <Check className="w-12 h-12" />
         </div>
@@ -35,7 +35,7 @@ export function Success() {
           Votre photo a traversé le portail des jeux… Elle arrive bientôt dans votre boîte mail !<br />
         </p>
         <p className="text-neutral-400 text-lg leading-relaxed mb-4">L’équipe du musée vous remercie de votre visite !</p>
-        
+
         <div className="text-neutral-500 text-sm font-medium animate-pulse">
           Retour à l'accueil dans {countdown} seconde{countdown > 1 ? "s" : ""}...
         </div>
