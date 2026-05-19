@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -63,8 +63,8 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
                 className={`w-full h-16 bg-neutral-950 border-2 rounded-2xl px-5 text-lg text-white placeholder:text-neutral-600 focus:ring-4 outline-none transition-all ${email && !isValidEmail
-                    ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
-                    : "border-neutral-800 focus:border-emerald-500 focus:ring-emerald-500/20"
+                  ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-neutral-800 focus:border-emerald-500 focus:ring-emerald-500/20"
                   }`}
               />
             </div>
@@ -131,7 +131,16 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-col lg:flex-row-reverse">
+            <Button
+              onClick={() => navigate("/")}
+              variant="outline"
+              size="lg"
+              className="h-16 px-6 rounded-2xl text-lg font-bold shadow-xl transition-all border-2 border-neutral-800 hover:bg-neutral-800 text-emerald hover:text-white"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Accueil
+            </Button>
             <Button
               onClick={handleSendEmail}
               disabled={isSending || !isValidEmail || allowEmailStorage === null || allowPhotoStorage === null}
