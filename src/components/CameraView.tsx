@@ -117,7 +117,7 @@ export function CameraView({
             Immortalisez votre aventure !
           </CardTitle>
           <CardDescription className="text-neutral-400 text-lg">
-            Choisissez le décor dans lequel vous souhaitez apparaître, puis cliquez sur l’appareil photo. Vous aurez ensuite 5 secondes pour prendre la pose… sourire éclatant ou grimace rigolote, à vous de choisir !
+            Choisissez le décor dans lequel vous souhaitez apparaître, puis cliquez sur l’appareil photo. Vous aurez ensuite 5 secondes pour prendre la pose… Sourire éclatant ou grimace rigolote, à vous de choisir !
           </CardDescription>
         </div>
 

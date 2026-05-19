@@ -9,7 +9,7 @@ export function Instructions() {
         <div className="flex items-center justify-center min-h-screen">
             <Card className="w-full max-w-md p-8 flex flex-col items-center justify-center space-y-8 bg-neutral-900/50 backdrop-blur-xl border-neutral-800 shadow-2xl rounded-3xl text-lg text-neutral-400">
                 <p className=" mb-6">Choisissez le décor dans lequel vous souhaitez apparaître, puis cliquez sur l’appareil photo.
-                    Vous aurez ensuite 5 secondes pour prendre la pose… sourire éclatant ou grimace rigolote, à vous de choisir !</p>
+                    Vous aurez ensuite 5 secondes pour prendre la pose… Sourire éclatant ou grimace rigolote, à vous de choisir !</p>
 
                 <p>Une fois votre photo validée, entrez votre adresse mail pour la recevoir.</p>
                 <button
