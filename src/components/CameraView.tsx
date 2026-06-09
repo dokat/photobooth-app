@@ -112,11 +112,11 @@ export function CameraView({
       {/* --- Header Section --- */}
       <CardHeader className="p-0 border-b border-neutral-800 pb-4 shrink-0 flex flex-row items-center justify-between">
         <div className="space-y-1">
-          <CardTitle className="text-3xl font-bold flex items-center gap-3 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-            <Camera className="w-8 h-8 text-emerald-400" />
+          <CardTitle className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+            <Camera className="w-10 h-10 text-emerald-400" />
             Immortalisez votre aventure !
           </CardTitle>
-          <CardDescription className="text-neutral-400 text-lg">
+          <CardDescription className="text-neutral-400 text-2xl">
             Choisissez le décor dans lequel vous souhaitez apparaître, puis cliquez sur l’appareil photo. Vous aurez ensuite 5 secondes pour prendre la pose… Sourire éclatant ou grimace rigolote, à vous de choisir !
           </CardDescription>
         </div>
@@ -140,21 +140,20 @@ export function CameraView({
                     : "bg-neutral-800 text-neutral-400 hover:text-white border-neutral-700"
                 )}
               >
-                <Pipette className="w-5 h-5" />
+                <Pipette className="w-10 h-10" />
               </Button>
             </div>
           )}
 
           <Button
             variant="ghost"
-            size="icon"
             onClick={handleAdminToggle}
             className={cn(
-              "rounded-full transition-all duration-300",
+              "rounded-full transition-all duration-300 [&_svg]:size-auto",
               isAdmin ? "text-emerald-500 hover:bg-emerald-500/10" : "text-neutral-600 hover:text-neutral-400"
             )}
           >
-            {isAdmin ? <Lock className="w-5 h-5" /> : <Settings className="w-5 h-5" />}
+            {isAdmin ? <Lock className="w-10 h-10" /> : <Settings className="w-10 h-10" />}
           </Button>
         </div>
       </CardHeader>
@@ -197,17 +196,17 @@ export function CameraView({
                 onClick={onRetake}
                 variant="secondary"
                 size="lg"
-                className="h-16 px-8 rounded-2xl text-xl font-bold bg-neutral-800/80 hover:bg-neutral-700 text-white shadow-xl hover:scale-105 transition-all border border-neutral-700"
+                className="h-16 px-8 rounded-2xl text-4xl font-bold bg-neutral-800/80 hover:bg-neutral-700 text-white shadow-xl hover:scale-105 transition-all border border-neutral-700 [&_svg]:size-auto"
               >
-                <RefreshCw className="w-6 h-6 mr-3" />
+                <RefreshCw className="w-10 h-10 mr-3" />
                 Reprendre la photo
               </Button>
               <Button
                 onClick={onValidate}
                 size="lg"
-                className="h-16 px-8 rounded-2xl text-xl font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.5)] hover:scale-105 transition-all border-none"
+                className="h-16 px-8 rounded-2xl text-4xl font-bold bg-emerald-500 hover:bg-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.5)] hover:scale-105 transition-all border-none [&_svg]:size-auto"
               >
-                <Check className="w-6 h-6 mr-3" />
+                <Check className="w-10 h-10 mr-3" />
                 Valider la photo
               </Button>
             </div>
@@ -217,9 +216,9 @@ export function CameraView({
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center pb-12 transition-all duration-300">
               <Button
                 onClick={startCountdown}
-                className="rounded-full w-16 h-16 bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all active:scale-90 border-none group/btn"
+                className="rounded-full w-24 h-24 bg-emerald-500/75 hover:bg-emerald-400/75 shadow-[0_0_50px_rgba(16,185,129,0.5)] transition-all active:scale-90 border-none group/btn [&_svg]:size-auto"
               >
-                <Camera className="text-white transition-transform group-hover/btn:scale-110" size={16} />
+                <Camera className="text-white transition-transform group-hover/btn:scale-110" size={40} />
               </Button>
             </div>
           )

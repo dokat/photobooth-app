@@ -51,7 +51,7 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
             <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Magnifique !</span>
           </h2>
 
-          <p className="text-neutral-400 text-lg mb-10 leading-relaxed">
+          <p className="text-neutral-400 text-3xl mb-10 leading-relaxed">
             Votre souvenir est prêt. Entrez votre adresse e-mail pour le recevoir instantanément dans votre boîte de réception.
           </p>
 
@@ -62,20 +62,20 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
-                className={`w-full h-16 bg-neutral-950 border-2 rounded-2xl px-5 text-lg text-white placeholder:text-neutral-600 focus:ring-4 outline-none transition-all ${email && !isValidEmail
+                className={`w-full h-16 bg-neutral-950 border-2 rounded-2xl px-5 text-3xl text-white placeholder:text-neutral-600 focus:ring-4 outline-none transition-all ${email && !isValidEmail
                   ? "border-red-500/50 focus:border-red-500 focus:ring-red-500/20"
                   : "border-neutral-800 focus:border-emerald-500 focus:ring-emerald-500/20"
                   }`}
               />
             </div>
             {email && !isValidEmail && (
-              <p className="text-red-400 text-sm font-medium pl-2">Veuillez saisir une adresse e-mail valide.</p>
+              <p className="text-red-400 text-2xl font-medium pl-2">Veuillez saisir une adresse e-mail valide.</p>
             )}
           </div>
 
           <div className="space-y-6 mb-10">
             <div className="flex flex-col space-y-3">
-              <span className="text-sm text-neutral-400 font-medium leading-tight">
+              <span className="text-2xl text-neutral-400 font-medium leading-tight">
                 Je souhaite recevoir les actualités du musée
               </span>
               <div className="flex gap-6">
@@ -87,7 +87,7 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
                     onChange={() => setAllowEmailStorage(true)}
                     className="w-5 h-5 accent-emerald-500 cursor-pointer"
                   />
-                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Oui</span>
+                  <span className="text-2xl text-neutral-300 group-hover:text-white transition-colors font-medium">Oui</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer group">
                   <input
@@ -97,13 +97,13 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
                     onChange={() => setAllowEmailStorage(false)}
                     className="w-5 h-5 accent-emerald-500 cursor-pointer"
                   />
-                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Non</span>
+                  <span className="text-2xl text-neutral-300 group-hover:text-white transition-colors font-medium">Non</span>
                 </label>
               </div>
             </div>
 
             <div className="flex flex-col space-y-3">
-              <span className="text-sm text-neutral-400 font-medium leading-tight">
+              <span className="text-2xl text-neutral-400 font-medium leading-tight">
                 J’autorise le musée du château de Mayenne (service de Mayenne Communauté) à utiliser ma photo pour sa communication
               </span>
               <div className="flex gap-6">
@@ -115,7 +115,7 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
                     onChange={() => setAllowPhotoStorage(true)}
                     className="w-5 h-5 accent-emerald-500 cursor-pointer"
                   />
-                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Oui</span>
+                  <span className="text-2xl text-neutral-300 group-hover:text-white transition-colors font-medium">Oui</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer group">
                   <input
@@ -125,7 +125,7 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
                     onChange={() => setAllowPhotoStorage(false)}
                     className="w-5 h-5 accent-emerald-500 cursor-pointer"
                   />
-                  <span className="text-sm text-neutral-300 group-hover:text-white transition-colors font-medium">Non</span>
+                  <span className="text-2xl text-neutral-300 group-hover:text-white transition-colors font-medium">Non</span>
                 </label>
               </div>
             </div>
@@ -136,7 +136,7 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
               onClick={() => navigate("/")}
               variant="outline"
               size="lg"
-              className="h-16 px-6 rounded-2xl text-lg font-bold shadow-xl transition-all border-2 border-neutral-800 hover:bg-neutral-800 text-emerald hover:text-white"
+              className="h-16 px-6 rounded-2xl text-2xl font-bold shadow-xl transition-all border-2 border-neutral-800 hover:bg-neutral-800 text-emerald hover:text-white [&_svg]:size-auto "
             >
               <Home className="w-5 h-5 mr-2" />
               Accueil
@@ -145,7 +145,7 @@ export function ShareScreen({ capturedPhoto }: ShareScreenProps) {
               onClick={handleSendEmail}
               disabled={isSending || !isValidEmail || allowEmailStorage === null || allowPhotoStorage === null}
               size="lg"
-              className="flex-1 h-16 rounded-2xl text-xl font-bold shadow-xl transition-all bg-emerald-500 hover:bg-emerald-400 text-white"
+              className="flex-1 h-16 rounded-2xl text-2xl font-bold shadow-xl transition-all bg-emerald-500 hover:bg-emerald-400 text-white [&_svg]:size-auto "
             >
               {isSending ? <Loader2 className="animate-spin w-6 h-6 mr-3" /> : null}
               Envoyer ma photo

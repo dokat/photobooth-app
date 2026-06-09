@@ -28,15 +28,15 @@ export function Success() {
         <div className="w-24 h-24 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-2">
           <Check className="w-12 h-12" />
         </div>
-        <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+        <h2 className="text-6xl font-black tracking-tight leading-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
           Bravo !
         </h2>
-        <p className="text-neutral-400 text-lg leading-relaxed">
+        <p className="text-neutral-400 text-3xl leading-relaxed">
           Votre photo a traversé le portail des jeux… Elle arrive bientôt dans votre boîte mail !<br />
         </p>
-        <p className="text-neutral-400 text-lg leading-relaxed mb-4">L’équipe du musée vous remercie de votre visite !</p>
+        <p className="text-neutral-400 text-3xl leading-relaxed mb-4">L’équipe du musée vous remercie de votre visite !</p>
 
-        <div className="text-neutral-500 text-sm font-medium animate-pulse">
+        <div className="text-neutral-500 text-lg font-medium animate-pulse">
           Retour à l'accueil dans {countdown} seconde{countdown > 1 ? "s" : ""}...
         </div>
       </div>
