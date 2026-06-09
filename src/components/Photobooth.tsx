@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
 import { Card } from "@/components/ui/card";
@@ -64,6 +64,10 @@ export function Photobooth() {
     setIsAiLoaded,
   });
 
+  const handleStartCountdown = useCallback(() => {
+    startCountdown();
+  }, [startCountdown]);
+
   return (
     <div className="min-h-screen font-sans text-neutral-100 flex flex-col items-center justify-center relative">
 
@@ -94,7 +98,7 @@ export function Photobooth() {
               webcamRef={webcamRef}
               resultCanvasRef={resultCanvasRef}
               countdown={countdown}
-              startCountdown={startCountdown}
+              startCountdown={handleStartCountdown}
               tolerance={tolerance}
               setTolerance={setTolerance}
               keyColor={keyColor}

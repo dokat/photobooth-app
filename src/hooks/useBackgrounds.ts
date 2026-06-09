@@ -12,20 +12,16 @@ export function useBackgrounds(initialBgId: string | null = BACKGROUNDS[0].id) {
   const [bgImages, setBgImages] = useState<Record<string, HTMLImageElement>>({});
 
   useEffect(() => {
-    const imgs: HTMLImageElement[] = [];
+    const images: Record<string, HTMLImageElement> = {};
     BACKGROUNDS.forEach((bg) => {
       const img = new Image();
+      img.src = bg.src;
       img.crossOrigin = "anonymous";
       img.onload = () => {
+        images[bg.id] = img;
         setBgImages((prev) => ({ ...prev, [bg.id]: img }));
       };
-      img.src = bg.src;
-      imgs.push(img);
     });
-    // Cancel any pending onload callbacks on unmount
-    return () => {
-      imgs.forEach((img) => { img.onload = null; });
-    };
   }, []);
 
   const currentBgImage = selectedBgId ? bgImages[selectedBgId] : null;
