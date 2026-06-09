@@ -1,26 +1,22 @@
 import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase as defaultSupabase, type PhotoRow } from "@/lib/supabase";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Database, RefreshCw, Download, Trash2, Search, FileSpreadsheet,
-  Lock, Unlock, ArrowLeft, Check, X, KeyRound, Copy,
-  CheckCircle2, Image, Calendar, Mail, AlertCircle,
+  Unlock, ArrowLeft, Check, X, Copy,
+  CheckCircle2, Image, Calendar, AlertCircle,
   MailIcon
 } from "lucide-react";
-import { DEFAULT_ADMIN_PASSWORD, STORAGE_KEYS } from "@/constants";
 
 export function DataPage() {
   const navigate = useNavigate();
 
-  // Authentication states
-  const [loginEmail, setLoginEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
 
   // Data states
   const [photos, setPhotos] = useState<PhotoRow[]>([]);
@@ -39,13 +35,31 @@ export function DataPage() {
   const [isSendingAll, setIsSendingAll] = useState(false);
   const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
 
-  // Load session authentication on mount
+  // Check authentication on mount (sessionStorage or active Supabase session)
   useEffect(() => {
-    const savedAuth = sessionStorage.getItem("admin_data_authenticated");
-    if (savedAuth === "true") {
-      setIsAuthenticated(true);
-    }
+    const checkAuth = async () => {
+      const savedAuth = sessionStorage.getItem("admin_data_authenticated");
+      if (savedAuth === "true") {
+        setIsAuthenticated(true);
+        setAuthChecking(false);
+        return;
+      }
+      const { data } = await defaultSupabase.auth.getSession();
+      if (data.session) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem("admin_data_authenticated", "true");
+      }
+      setAuthChecking(false);
+    };
+    checkAuth();
   }, []);
+
+  // Redirect to home if not authenticated after check
+  useEffect(() => {
+    if (!authChecking && !isAuthenticated) {
+      navigate("/");
+    }
+  }, [authChecking, isAuthenticated, navigate]);
 
     // Fetch photos from Supabase
   const fetchPhotos = useCallback(async () => {
@@ -92,50 +106,11 @@ export function DataPage() {
     }
   }, [isAuthenticated, fetchPhotos]);
 
-  // Authenticate admin
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError("");
-    setIsAuthenticating(true);
-
-    try {
-      // 1. Fallback: local passcode authentication if email is empty
-      if (!loginEmail.trim()) {
-        const activePassword = localStorage.getItem(STORAGE_KEYS.ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
-        if (password === activePassword) {
-          setIsAuthenticated(true);
-          sessionStorage.setItem("admin_data_authenticated", "true");
-          setAuthError("");
-          return;
-        } else {
-          setAuthError("Mot de passe incorrect (ou saisissez un e-mail pour vous connecter via Supabase Auth).");
-          return;
-        }
-      }
-
-      // 2. Real connection/authentication via Supabase Auth
-      const { data, error } = await defaultSupabase.auth.signInWithPassword({
-        email: loginEmail.trim(),
-        password: password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.user) {
-        setIsAuthenticated(true);
-        sessionStorage.setItem("admin_data_authenticated", "true");
-        setAuthError("");
-      } else {
-        setAuthError("Échec de l'authentification.");
-      }
-    } catch (err: unknown) {
-      console.error("Erreur d'authentification Supabase :", err);
-      setAuthError(err instanceof Error ? err.message : "Erreur de connexion à Supabase.");
-    } finally {
-      setIsAuthenticating(false);
-    }
+  // Logout handler
+  const handleLogout = async () => {
+    sessionStorage.removeItem("admin_data_authenticated");
+    await defaultSupabase.auth.signOut();
+    navigate("/");
   };
 
 
@@ -289,93 +264,14 @@ export function DataPage() {
   // Calculate statistics
   const totalPhotos = photos.length;
 
-  // Render Login state
-  if (!isAuthenticated) {
+  // Show loading spinner while checking auth
+  if (authChecking || !isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/20 via-neutral-950 to-neutral-950 pointer-events-none" />
-
-        <Card className="w-full max-w-md bg-neutral-900/40 border-neutral-800 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden relative border">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500/0 via-emerald-500 to-cyan-500/0" />
-
-          <CardHeader className="text-center space-y-3 pt-8 pb-6">
-            <div className="mx-auto w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center border border-emerald-500/20">
-              <Lock className="w-8 h-8" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl font-bold text-neutral-100">Portail d'Administration</CardTitle>
-              <CardDescription className="text-neutral-400 mt-1">
-                Accès sécurisé aux données de l'application
-              </CardDescription>
-            </div>
-          </CardHeader>
-
-          <CardContent className="px-8 pb-8">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-emerald-500" />
-                  Adresse e-mail
-                </label>
-                <Input
-                  type="email"
-                  placeholder="admin@votredomaine.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="bg-neutral-950/50 border-neutral-800 text-neutral-200 placeholder:text-neutral-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 h-12 rounded-xl"
-                  autoFocus
-                />
-                <p className="text-[10px] text-neutral-500">Laissez vide pour vous connecter avec le mot de passe local.</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300 flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-emerald-500" />
-                  Mot de passe
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Entrez le mot de passe"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-neutral-950/50 border-neutral-800 text-neutral-200 placeholder:text-neutral-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 h-12 rounded-xl"
-                />
-              </div>
-
-              {authError && (
-                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/5 p-3 rounded-lg border border-red-500/10">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{authError}</span>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={isAuthenticating}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold h-12 rounded-xl transition-all shadow-lg shadow-emerald-500/15 flex items-center justify-center gap-2"
-              >
-                {isAuthenticating ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Connexion en cours...
-                  </>
-                ) : (
-                  "Se connecter"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-
-          <CardFooter className="bg-neutral-950/30 border-t border-neutral-900 px-8 py-4 flex justify-between items-center text-xs text-neutral-500">
-            <span>Photobooth App Admin Panel</span>
-            <button
-              onClick={() => navigate("/")}
-              className="text-neutral-400 hover:text-neutral-200 flex items-center gap-1 font-medium hover:underline"
-            >
-              <ArrowLeft className="w-3 h-3" /> Retour
-            </button>
-          </CardFooter>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+        <div className="relative w-12 h-12">
+          <span className="absolute inset-0 border-4 border-neutral-800 rounded-full" />
+          <span className="absolute inset-0 border-4 border-t-emerald-500 rounded-full animate-spin" />
+        </div>
       </div>
     );
   }
@@ -418,10 +314,7 @@ export function DataPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              onClick={() => {
-                sessionStorage.removeItem("admin_data_authenticated");
-                setIsAuthenticated(false);
-              }}
+              onClick={handleLogout}
               className="border-neutral-800 hover:border-neutral-700 bg-neutral-900/40 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900 rounded-xl h-11"
             >
               Verrouiller la session
