@@ -44,6 +44,7 @@ export type Database = {
           communication: boolean
           created_at: string
           email: string
+          email_sent_at: string | null
           id: number
           newsletter: boolean
           photo_id: string
@@ -52,6 +53,7 @@ export type Database = {
           communication: boolean
           created_at?: string
           email: string
+          email_sent_at?: string | null
           id?: number
           newsletter: boolean
           photo_id: string
@@ -60,6 +62,7 @@ export type Database = {
           communication?: boolean
           created_at?: string
           email?: string
+          email_sent_at?: string | null
           id?: number
           newsletter?: boolean
           photo_id?: string
