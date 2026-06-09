@@ -6,17 +6,17 @@ export function Success() {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(10);
 
+  // Single interval — decrements the counter, no restart on every tick
   useEffect(() => {
-    if (countdown === 0) {
-      navigate("/");
-      return;
-    }
-
     const timer = setInterval(() => {
       setCountdown((prev) => prev - 1);
     }, 1000);
-
     return () => clearInterval(timer);
+  }, []);
+
+  // Separate effect: navigate once the counter reaches 0
+  useEffect(() => {
+    if (countdown <= 0) navigate("/");
   }, [countdown, navigate]);
 
   return (

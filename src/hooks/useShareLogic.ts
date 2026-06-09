@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { db } from "@/lib/db";
 
@@ -9,7 +9,7 @@ export function useShareLogic(capturedPhoto: string) {
   const [allowEmailStorage, setAllowEmailStorage] = useState<boolean | null>(null);
   const [allowPhotoStorage, setAllowPhotoStorage] = useState<boolean | null>(null);
 
-  const isValidEmail = email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) !== null;
+  const isValidEmail = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), [email]);
 
   const handleSendEmail = async () => {
     if (!email || !capturedPhoto) return;

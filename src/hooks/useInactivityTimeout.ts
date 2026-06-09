@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface UseInactivityTimeoutProps {
   timeoutMs?: number;
@@ -11,6 +11,13 @@ export function useInactivityTimeout({
   onTimeout,
   enabled = true,
 }: UseInactivityTimeoutProps) {
+  // Keep a stable ref to always call the latest version of onTimeout
+  // without re-registering event listeners on every render
+  const onTimeoutRef = useRef(onTimeout);
+  useEffect(() => {
+    onTimeoutRef.current = onTimeout;
+  });
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -19,7 +26,7 @@ export function useInactivityTimeout({
     const resetTimer = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        onTimeout();
+        onTimeoutRef.current();
       }, timeoutMs);
     };
 
@@ -28,16 +35,12 @@ export function useInactivityTimeout({
 
     // Listen to user interactions
     const events = ["mousemove", "keydown", "touchstart", "click"];
-    events.forEach((event) => {
-      window.addEventListener(event, resetTimer);
-    });
+    events.forEach((event) => window.addEventListener(event, resetTimer));
 
     // Cleanup
     return () => {
       clearTimeout(timeoutId);
-      events.forEach((event) => {
-        window.removeEventListener(event, resetTimer);
-      });
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
     };
-  }, [timeoutMs, onTimeout, enabled]);
+  }, [timeoutMs, enabled]); // onTimeout intentionally omitted — tracked via ref
 }

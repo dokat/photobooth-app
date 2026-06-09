@@ -5,6 +5,8 @@ export function usePhotobooth(resultCanvasRef: RefObject<HTMLCanvasElement | nul
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Ref to check running state without adding `countdown` to startCountdown deps
+  const isCountingRef = useRef(false);
 
   const capturePhoto = useCallback(() => {
     if (resultCanvasRef.current) {
@@ -14,21 +16,23 @@ export function usePhotobooth(resultCanvasRef: RefObject<HTMLCanvasElement | nul
   }, [resultCanvasRef]);
 
   const startCountdown = useCallback(() => {
-    if (countdown !== null) return; // Prevent multiple clicks
+    if (isCountingRef.current) return; // Prevent multiple clicks
+    isCountingRef.current = true;
     setCountdown(5);
-    
+
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev === null) return null;
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
+          isCountingRef.current = false;
           capturePhoto();
           return null;
         }
         return prev - 1;
       });
     }, 1000);
-  }, [capturePhoto, countdown]);
+  }, [capturePhoto]); // `countdown` no longer needed — tracked via ref
 
   useEffect(() => {
     return () => {
@@ -39,6 +43,7 @@ export function usePhotobooth(resultCanvasRef: RefObject<HTMLCanvasElement | nul
   const resetPhoto = useCallback(() => {
     setCapturedPhoto(null);
     setCountdown(null);
+    isCountingRef.current = false;
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 

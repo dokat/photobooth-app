@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ChangeEvent } from "react";
+import { useState, useEffect, useCallback, useMemo, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase as defaultSupabase, type PhotoRow } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -235,33 +235,24 @@ export function DataPage() {
     document.body.removeChild(link);
   };
 
-  // Filter logic
-  const filteredPhotos = photos.filter((photo) => {
-    // Search filter
+  // Filter logic — memoised to avoid recomputing on unrelated renders
+  const filteredPhotos = useMemo(() => photos.filter((photo) => {
     const matchesSearch = photo.email.toLowerCase().includes(searchText.toLowerCase());
-
-    // Newsletter filter
     const matchesNewsletter =
       newsletterFilter === "all" ? true :
         newsletterFilter === "yes" ? photo.newsletter === true :
           photo.newsletter === false;
-
-    // Comm filter
     const matchesComm =
       commFilter === "all" ? true :
         commFilter === "yes" ? photo.communication === true :
           photo.communication === false;
-
-    // Email sent filter
     const matchesEmailSent =
       emailSentFilter === "all" ? true :
         emailSentFilter === "yes" ? photo.email_sent_at != null :
           photo.email_sent_at == null;
-
     return matchesSearch && matchesNewsletter && matchesComm && matchesEmailSent;
-  });
+  }), [photos, searchText, newsletterFilter, commFilter, emailSentFilter]);
 
-  // Calculate statistics
   const totalPhotos = photos.length;
 
   // Show loading spinner while checking auth
