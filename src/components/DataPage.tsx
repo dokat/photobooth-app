@@ -1,4 +1,4 @@
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase as defaultSupabase, type PhotoRow } from "@/lib/supabase";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -32,6 +32,7 @@ export function DataPage() {
   const [newsletterFilter, setNewsletterFilter] = useState<"all" | "yes" | "no">("all");
   const [commFilter, setCommFilter] = useState<"all" | "yes" | "no">("all");
   const [emailSentFilter, setEmailSentFilter] = useState<"all" | "yes" | "no">("all");
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [copiedEmailId, setCopiedEmailId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isSending, setIsSending] = useState<number | null>(null);
@@ -45,12 +46,50 @@ export function DataPage() {
     }
   }, []);
 
+    // Fetch photos from Supabase
+  const fetchPhotos = useCallback(async () => {
+    setIsLoading(true);
+    setFetchError("");
+    try {
+      const { data, error } = await defaultSupabase
+        .from("photos")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      const rows = data || [];
+      setPhotos(rows);
+
+      // Pre-fetch signed URLs for all photos
+      const entries = await Promise.all(
+        rows
+          .filter((r) => r.photo_id)
+          .map(async (r) => {
+            const { data: urlData, error: urlError } = await defaultSupabase.storage
+              .from("photobooth")
+              .createSignedUrl(r.photo_id, 3600);
+            if (urlError) {
+              console.error("Erreur de génération de l'URL signée :", urlError);
+              return [r.photo_id, ""] as const;
+            }
+            return [r.photo_id, urlData.signedUrl] as const;
+          })
+      );
+      setPhotoUrls(Object.fromEntries(entries));
+    } catch (err: unknown) {
+      console.error("Erreur de récupération des données :", err);
+      setFetchError(err instanceof Error ? err.message : "Erreur lors de la récupération des photos depuis Supabase.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // Fetch photos once authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchPhotos();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchPhotos]);
 
   // Authenticate admin
   const handleLogin = async (e: React.FormEvent) => {
@@ -98,25 +137,7 @@ export function DataPage() {
     }
   };
 
-  // Fetch photos from Supabase
-  const fetchPhotos = async () => {
-    setIsLoading(true);
-    setFetchError("");
-    try {
-      const { data, error } = await defaultSupabase
-        .from("photos")
-        .select("*")
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setPhotos(data || []);
-    } catch (err: unknown) {
-      console.error("Erreur de récupération des données :", err);
-      setFetchError(err instanceof Error ? err.message : "Erreur lors de la récupération des photos depuis Supabase.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Copy email to clipboard
   const handleCopyEmail = (email: string, id: number) => {
@@ -180,11 +201,9 @@ export function DataPage() {
       }
     }
 
-  // Get public photo URL
-  const getPhotoUrl = (photoId: string) => {
-    if (!photoId) return "";
-    const { data } = defaultSupabase.storage.from("photobooth").getPublicUrl(photoId);
-    return data.publicUrl;
+  // Get cached signed URL (synchronous — URLs are pre-fetched by loadPhotoUrls)
+  const getPhotoUrl = (photoId: string): string => {
+    return photoUrls[photoId] ?? "";
   };
 
   // Export to CSV
