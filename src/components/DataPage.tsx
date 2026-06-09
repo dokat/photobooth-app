@@ -236,7 +236,7 @@ export function DataPage() {
     if (filteredPhotos.length === 0) return;
 
     // Headers
-    const headers = ["ID", "Date", "Email", "Newsletter", "Communication Consent", "Photo URL"];
+    const headers = ["ID", "Date", "Email", "Newsletter", "Communication Consent", "Date d'envoi"];
 
     // Rows
     const csvRows = filteredPhotos.map(row => [
@@ -245,7 +245,7 @@ export function DataPage() {
       `"${row.email.replace(/"/g, '""')}"`,
       row.newsletter ? "Oui" : "Non",
       row.communication ? "Oui" : "Non",
-      getPhotoUrl(row.photo_id)
+      row.email_sent_at ? new Date(row.email_sent_at).toLocaleString("fr-FR") : "Non envoyé"
     ]);
 
     // Combine
