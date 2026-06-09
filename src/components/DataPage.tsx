@@ -36,6 +36,7 @@ export function DataPage() {
   const [copiedEmailId, setCopiedEmailId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isSending, setIsSending] = useState<number | null>(null);
+  const [isSendingAll, setIsSendingAll] = useState(false);
   const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
 
   // Load session authentication on mount
@@ -200,6 +201,30 @@ export function DataPage() {
         fetchPhotos();
       }
     }
+
+  const handleResendAllUnsent = async () => {
+    const unsent = photos.filter((p) => p.email_sent_at == null);
+    if (unsent.length === 0) return;
+    if (!window.confirm(`Renvoyer l'email pour ${unsent.length} photo(s) non encore envoyée(s) ?`)) return;
+
+    setIsSendingAll(true);
+    let errorCount = 0;
+    for (const row of unsent) {
+      try {
+        const { error } = await defaultSupabase.functions.invoke('send-email', {
+          body: { data_id: row.id },
+        });
+        if (error) throw error;
+      } catch {
+        errorCount++;
+      }
+    }
+    setIsSendingAll(false);
+    if (errorCount > 0) {
+      alert(`${errorCount} envoi(s) ont échoué.`);
+    }
+    fetchPhotos();
+  };
 
   // Get cached signed URL (synchronous — URLs are pre-fetched by loadPhotoUrls)
   const getPhotoUrl = (photoId: string): string => {
@@ -488,6 +513,20 @@ export function DataPage() {
             >
               <FileSpreadsheet className="w-4 h-4" />
               Exporter en CSV ({filteredPhotos.length})
+            </Button>
+
+            <Button
+              disabled={isSendingAll || photos.filter((p) => p.email_sent_at == null).length === 0}
+              onClick={handleResendAllUnsent}
+              className="bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-200 font-semibold h-10 rounded-xl flex items-center gap-2 px-4 transition-all active:scale-95"
+              title="Renvoyer l'email à toutes les entrées sans date d'envoi"
+            >
+              {isSendingAll ? (
+                <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+              ) : (
+                <MailIcon className="w-4 h-4" />
+              )}
+              Renvoyer non envoyés ({photos.filter((p) => p.email_sent_at == null).length})
             </Button>
           </div>
         </div>
