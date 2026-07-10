@@ -12,6 +12,20 @@ import {
   MailIcon
 } from "lucide-react";
 
+// --- localStorage cache helpers ---
+const PHOTOS_CACHE_KEY = "photobooth_photos_cache";
+
+function savePhotosCache(rows: PhotoRow[]): void {
+  try { localStorage.setItem(PHOTOS_CACHE_KEY, JSON.stringify(rows)); } catch { /* quota exceeded or private browsing */ }
+}
+
+function loadPhotosCache(): PhotoRow[] | null {
+  try {
+    const raw = localStorage.getItem(PHOTOS_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as PhotoRow[]) : null;
+  } catch { return null; }
+}
+
 export function DataPage() {
   const navigate = useNavigate();
 
@@ -22,6 +36,7 @@ export function DataPage() {
   // Data states
   const [photos, setPhotos] = useState<PhotoRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState("");
 
   // UI state
@@ -71,9 +86,38 @@ export function DataPage() {
     }
   }, [authChecking, isAuthenticated, navigate]);
 
-  // Fetch photos from Supabase, serving images from OPFS cache when available
-  const fetchPhotos = useCallback(async () => {
-    setIsLoading(true);
+  // Resolve a single photo URL: OPFS cache first, Supabase download as fallback
+  const resolvePhotoUrl = useCallback(async (photoId: string): Promise<string> => {
+    const cachedUrl = await getPhotoFromCache(photoId);
+    if (cachedUrl) {
+      blobUrlsRef.current.push(cachedUrl);
+      return cachedUrl;
+    }
+    const { data: urlData, error: urlError } = await defaultSupabase.storage
+      .from("photobooth")
+      .createSignedUrl(photoId, 60);
+    if (urlError || !urlData) {
+      console.error("Erreur de génération de l'URL signée :", urlError);
+      return "";
+    }
+    try {
+      const response = await fetch(urlData.signedUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const blobUrl = await savePhotoToCache(photoId, blob);
+      blobUrlsRef.current.push(blobUrl);
+      return blobUrl;
+    } catch (fetchErr) {
+      console.error("Erreur de téléchargement / mise en cache de la photo :", fetchErr);
+      return urlData.signedUrl;
+    }
+  }, []);
+
+  // Fetch all photos from Supabase, serving images from OPFS cache when available.
+  // silent=true: background refresh (no full-screen spinner, subtle indicator only).
+  const fetchPhotos = useCallback(async (silent = false) => {
+    if (silent) setIsRefreshing(true);
+    else setIsLoading(true);
     setFetchError("");
 
     // Revoke previous blob URLs before creating new ones
@@ -89,45 +133,12 @@ export function DataPage() {
       if (error) throw error;
       const rows = data || [];
       setPhotos(rows);
+      savePhotosCache(rows);
 
-      // Resolve each photo URL: OPFS cache first, Supabase download as fallback
       const entries = await Promise.all(
         rows
           .filter((r) => r.photo_id)
-          .map(async (r) => {
-            // 1. Try OPFS cache
-            const cachedUrl = await getPhotoFromCache(r.photo_id);
-            if (cachedUrl) {
-              console.log('OPFS');
-              
-              blobUrlsRef.current.push(cachedUrl);
-              return [r.photo_id, cachedUrl] as const;
-            }
-
-            // 2. Not cached: generate a short-lived signed URL just to download the blob
-            const { data: urlData, error: urlError } = await defaultSupabase.storage
-              .from("photobooth")
-              .createSignedUrl(r.photo_id, 60);
-            if (urlError || !urlData) {
-              console.error("Erreur de génération de l'URL signée :", urlError);
-              return [r.photo_id, ""] as const;
-            }
-
-            try {
-              console.log('Using fetch');
-              
-              const response = await fetch(urlData.signedUrl);
-              if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              const blob = await response.blob();
-              const blobUrl = await savePhotoToCache(r.photo_id, blob);
-              blobUrlsRef.current.push(blobUrl);
-              return [r.photo_id, blobUrl] as const;
-            } catch (fetchErr) {
-              console.error("Erreur de téléchargement / mise en cache de la photo :", fetchErr);
-              // Fallback to the signed URL (won't be cached, but still displayed)
-              return [r.photo_id, urlData.signedUrl] as const;
-            }
-          })
+          .map(async (r) => [r.photo_id, await resolvePhotoUrl(r.photo_id)] as const)
       );
       setPhotoUrls(Object.fromEntries(entries));
     } catch (err: unknown) {
@@ -135,15 +146,70 @@ export function DataPage() {
       setFetchError(err instanceof Error ? err.message : "Erreur lors de la récupération des photos depuis Supabase.");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, []);
+  }, [resolvePhotoUrl]);
 
-  // Fetch photos once authenticated
+  // On authentication: show cached rows immediately, then silently refresh from Supabase
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchPhotos();
+    if (!isAuthenticated) return;
+
+    const cached = loadPhotosCache();
+    if (cached && cached.length > 0) {
+      setPhotos(cached);
+      // Resolve URLs from OPFS for cached rows (fast, no network), then background-refresh
+      Promise.all(
+        cached
+          .filter((r) => r.photo_id)
+          .map(async (r) => [r.photo_id, await resolvePhotoUrl(r.photo_id)] as const)
+      ).then((entries) => setPhotoUrls(Object.fromEntries(entries)));
+      fetchPhotos(true);
+    } else {
+      fetchPhotos(false);
     }
-  }, [isAuthenticated, fetchPhotos]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  // Supabase Realtime: push INSERT / UPDATE / DELETE without manual refresh
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const channel = defaultSupabase
+      .channel("photos-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "photos" },
+        async (payload) => {
+          if (payload.eventType === "INSERT") {
+            const newRow = payload.new as PhotoRow;
+            const url = newRow.photo_id ? await resolvePhotoUrl(newRow.photo_id) : "";
+            if (url) setPhotoUrls((prev) => ({ ...prev, [newRow.photo_id]: url }));
+            setPhotos((prev) => {
+              const updated = [newRow, ...prev];
+              savePhotosCache(updated);
+              return updated;
+            });
+          } else if (payload.eventType === "UPDATE") {
+            const updatedRow = payload.new as PhotoRow;
+            setPhotos((prev) => {
+              const updated = prev.map((p) => (p.id === updatedRow.id ? updatedRow : p));
+              savePhotosCache(updated);
+              return updated;
+            });
+          } else if (payload.eventType === "DELETE") {
+            const deletedId = (payload.old as PhotoRow).id;
+            setPhotos((prev) => {
+              const updated = prev.filter((p) => p.id !== deletedId);
+              savePhotosCache(updated);
+              return updated;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { defaultSupabase.removeChannel(channel); };
+  }, [isAuthenticated, resolvePhotoUrl]);
 
   // Logout handler
   const handleLogout = async () => {
@@ -199,8 +265,12 @@ export function DataPage() {
         }
       }
 
-      // Update state
-      setPhotos((prev) => prev.filter((p) => p.id !== row.id));
+      // Update state + localStorage cache
+      setPhotos((prev) => {
+        const updated = prev.filter((p) => p.id !== row.id);
+        savePhotosCache(updated);
+        return updated;
+      });
     } catch (err: unknown) {
       console.error("Erreur de suppression :", err);
       alert(`Erreur de suppression : ${err instanceof Error ? err.message : "Erreur inconnue."}`);
@@ -222,7 +292,7 @@ export function DataPage() {
         alert(`Erreur de suppression : ${err instanceof Error ? err.message : "Erreur inconnue."}`);
       } finally {
         setIsSending(null);
-        fetchPhotos();
+        // Realtime UPDATE event will refresh email_sent_at automatically
       }
     }
 
@@ -247,7 +317,8 @@ export function DataPage() {
     if (errorCount > 0) {
       alert(`${errorCount} envoi(s) ont échoué.`);
     }
-    fetchPhotos();
+    // Silent refresh to catch any email_sent_at updates missed by Realtime
+    fetchPhotos(true);
   };
 
   // Get cached signed URL (synchronous — URLs are pre-fetched by loadPhotoUrls)
@@ -440,11 +511,11 @@ export function DataPage() {
           <div className="flex items-center gap-3 self-end lg:self-auto">
             <Button
               variant="outline"
-              onClick={fetchPhotos}
-              disabled={isLoading}
+              onClick={() => fetchPhotos(false)}
+              disabled={isLoading || isRefreshing}
               className="border-neutral-800 hover:border-neutral-700 bg-neutral-950/50 hover:bg-neutral-900 rounded-xl text-neutral-300 flex items-center gap-2 h-10 px-4 transition-all"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${(isLoading || isRefreshing) ? "animate-spin text-emerald-400" : ""}`} />
               Rafraîchir
             </Button>
 
@@ -481,7 +552,7 @@ export function DataPage() {
               <p className="font-semibold">Erreur de chargement</p>
               <p className="text-neutral-400 text-xs mt-0.5">{fetchError}</p>
             </div>
-            <Button onClick={fetchPhotos} size="sm" variant="outline" className="border-red-500/20 text-red-400 hover:bg-red-500/10">
+            <Button onClick={() => fetchPhotos(false)} size="sm" variant="outline" className="border-red-500/20 text-red-400 hover:bg-red-500/10">
               Réessayer
             </Button>
           </div>
