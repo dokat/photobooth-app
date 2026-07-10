@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, type ChangeEvent } from "react";
+import { useState, useEffect, useCallback, useRef, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase as defaultSupabase, type PhotoRow } from "@/lib/supabase";
+import { getPhotoFromCache, savePhotoToCache, removePhotoFromCache } from "@/lib/photoCache";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,15 @@ export function DataPage() {
   const [isSendingAll, setIsSendingAll] = useState(false);
   const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
 
+  // Tracks blob: URLs created from OPFS so they can be revoked on unmount / refresh
+  const blobUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    return () => {
+      blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, []);
+
   // Check authentication on mount (sessionStorage or active Supabase session)
   useEffect(() => {
     const checkAuth = async () => {
@@ -61,10 +71,15 @@ export function DataPage() {
     }
   }, [authChecking, isAuthenticated, navigate]);
 
-    // Fetch photos from Supabase
+  // Fetch photos from Supabase, serving images from OPFS cache when available
   const fetchPhotos = useCallback(async () => {
     setIsLoading(true);
     setFetchError("");
+
+    // Revoke previous blob URLs before creating new ones
+    blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    blobUrlsRef.current = [];
+
     try {
       const { data, error } = await defaultSupabase
         .from("photos")
@@ -75,19 +90,43 @@ export function DataPage() {
       const rows = data || [];
       setPhotos(rows);
 
-      // Pre-fetch signed URLs for all photos
+      // Resolve each photo URL: OPFS cache first, Supabase download as fallback
       const entries = await Promise.all(
         rows
           .filter((r) => r.photo_id)
           .map(async (r) => {
+            // 1. Try OPFS cache
+            const cachedUrl = await getPhotoFromCache(r.photo_id);
+            if (cachedUrl) {
+              console.log('OPFS');
+              
+              blobUrlsRef.current.push(cachedUrl);
+              return [r.photo_id, cachedUrl] as const;
+            }
+
+            // 2. Not cached: generate a short-lived signed URL just to download the blob
             const { data: urlData, error: urlError } = await defaultSupabase.storage
               .from("photobooth")
-              .createSignedUrl(r.photo_id, 3600);
-            if (urlError) {
+              .createSignedUrl(r.photo_id, 60);
+            if (urlError || !urlData) {
               console.error("Erreur de génération de l'URL signée :", urlError);
               return [r.photo_id, ""] as const;
             }
-            return [r.photo_id, urlData.signedUrl] as const;
+
+            try {
+              console.log('Using fetch');
+              
+              const response = await fetch(urlData.signedUrl);
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              const blob = await response.blob();
+              const blobUrl = await savePhotoToCache(r.photo_id, blob);
+              blobUrlsRef.current.push(blobUrl);
+              return [r.photo_id, blobUrl] as const;
+            } catch (fetchErr) {
+              console.error("Erreur de téléchargement / mise en cache de la photo :", fetchErr);
+              // Fallback to the signed URL (won't be cached, but still displayed)
+              return [r.photo_id, urlData.signedUrl] as const;
+            }
           })
       );
       setPhotoUrls(Object.fromEntries(entries));
@@ -149,6 +188,16 @@ export function DataPage() {
         .eq("id", row.id);
 
       if (dbError) throw dbError;
+
+      // 3. Remove from OPFS cache and revoke blob URL
+      if (row.photo_id) {
+        await removePhotoFromCache(row.photo_id);
+        const blobUrl = photoUrls[row.photo_id];
+        if (blobUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(blobUrl);
+          blobUrlsRef.current = blobUrlsRef.current.filter((u) => u !== blobUrl);
+        }
+      }
 
       // Update state
       setPhotos((prev) => prev.filter((p) => p.id !== row.id));
