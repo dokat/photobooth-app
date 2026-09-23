@@ -1,30 +1,15 @@
-import { useState, useEffect, useCallback, useRef, type ChangeEvent } from "react";
+import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase as defaultSupabase, type PhotoRow } from "@/lib/supabase";
-import { getPhotoFromCache, savePhotoToCache, removePhotoFromCache } from "@/lib/photoCache";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Database, RefreshCw, Download, Trash2, Search, FileSpreadsheet,
+  Database, RefreshCw, Trash2, Search, FileSpreadsheet,
   Unlock, ArrowLeft, Check, X, Copy,
   CheckCircle2, Image, Calendar, AlertCircle,
   MailIcon
 } from "lucide-react";
-
-// --- localStorage cache helpers ---
-const PHOTOS_CACHE_KEY = "photobooth_photos_cache";
-
-function savePhotosCache(rows: PhotoRow[]): void {
-  try { localStorage.setItem(PHOTOS_CACHE_KEY, JSON.stringify(rows)); } catch { /* quota exceeded or private browsing */ }
-}
-
-function loadPhotosCache(): PhotoRow[] | null {
-  try {
-    const raw = localStorage.getItem(PHOTOS_CACHE_KEY);
-    return raw ? (JSON.parse(raw) as PhotoRow[]) : null;
-  } catch { return null; }
-}
 
 export function DataPage() {
   const navigate = useNavigate();
@@ -44,21 +29,10 @@ export function DataPage() {
   const [newsletterFilter, setNewsletterFilter] = useState<"all" | "yes" | "no">("all");
   const [commFilter, setCommFilter] = useState<"all" | "yes" | "no">("all");
   const [emailSentFilter, setEmailSentFilter] = useState<"all" | "yes" | "no">("all");
-  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [copiedEmailId, setCopiedEmailId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [isSending, setIsSending] = useState<number | null>(null);
   const [isSendingAll, setIsSendingAll] = useState(false);
-  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
-
-  // Tracks blob: URLs created from OPFS so they can be revoked on unmount / refresh
-  const blobUrlsRef = useRef<string[]>([]);
-
-  useEffect(() => {
-    return () => {
-      blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
-    };
-  }, []);
 
   // Check authentication on mount (sessionStorage or active Supabase session)
   useEffect(() => {
@@ -86,43 +60,12 @@ export function DataPage() {
     }
   }, [authChecking, isAuthenticated, navigate]);
 
-  // Resolve a single photo URL: OPFS cache first, Supabase download as fallback
-  const resolvePhotoUrl = useCallback(async (photoId: string): Promise<string> => {
-    const cachedUrl = await getPhotoFromCache(photoId);
-    if (cachedUrl) {
-      blobUrlsRef.current.push(cachedUrl);
-      return cachedUrl;
-    }
-    const { data: urlData, error: urlError } = await defaultSupabase.storage
-      .from("photobooth")
-      .createSignedUrl(photoId, 60);
-    if (urlError || !urlData) {
-      console.error("Erreur de génération de l'URL signée :", urlError);
-      return "";
-    }
-    try {
-      const response = await fetch(urlData.signedUrl);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const blob = await response.blob();
-      const blobUrl = await savePhotoToCache(photoId, blob);
-      blobUrlsRef.current.push(blobUrl);
-      return blobUrl;
-    } catch (fetchErr) {
-      console.error("Erreur de téléchargement / mise en cache de la photo :", fetchErr);
-      return urlData.signedUrl;
-    }
-  }, []);
-
   // Fetch all photos from Supabase, serving images from OPFS cache when available.
   // silent=true: background refresh (no full-screen spinner, subtle indicator only).
   const fetchPhotos = useCallback(async (silent = false) => {
     if (silent) setIsRefreshing(true);
     else setIsLoading(true);
     setFetchError("");
-
-    // Revoke previous blob URLs before creating new ones
-    blobUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
-    blobUrlsRef.current = [];
 
     try {
       const { data, error } = await defaultSupabase
@@ -133,14 +76,7 @@ export function DataPage() {
       if (error) throw error;
       const rows = data || [];
       setPhotos(rows);
-      savePhotosCache(rows);
 
-      const entries = await Promise.all(
-        rows
-          .filter((r) => r.photo_id)
-          .map(async (r) => [r.photo_id, await resolvePhotoUrl(r.photo_id)] as const)
-      );
-      setPhotoUrls(Object.fromEntries(entries));
     } catch (err: unknown) {
       console.error("Erreur de récupération des données :", err);
       setFetchError(err instanceof Error ? err.message : "Erreur lors de la récupération des photos depuis Supabase.");
@@ -148,27 +84,7 @@ export function DataPage() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [resolvePhotoUrl]);
-
-  // On authentication: show cached rows immediately, then silently refresh from Supabase
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const cached = loadPhotosCache();
-    if (cached && cached.length > 0) {
-      setPhotos(cached);
-      // Resolve URLs from OPFS for cached rows (fast, no network), then background-refresh
-      Promise.all(
-        cached
-          .filter((r) => r.photo_id)
-          .map(async (r) => [r.photo_id, await resolvePhotoUrl(r.photo_id)] as const)
-      ).then((entries) => setPhotoUrls(Object.fromEntries(entries)));
-      fetchPhotos(true);
-    } else {
-      fetchPhotos(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, []);
 
   // Supabase Realtime: push INSERT / UPDATE / DELETE without manual refresh
   useEffect(() => {
@@ -182,25 +98,20 @@ export function DataPage() {
         async (payload) => {
           if (payload.eventType === "INSERT") {
             const newRow = payload.new as PhotoRow;
-            const url = newRow.photo_id ? await resolvePhotoUrl(newRow.photo_id) : "";
-            if (url) setPhotoUrls((prev) => ({ ...prev, [newRow.photo_id]: url }));
             setPhotos((prev) => {
               const updated = [newRow, ...prev];
-              savePhotosCache(updated);
               return updated;
             });
           } else if (payload.eventType === "UPDATE") {
             const updatedRow = payload.new as PhotoRow;
             setPhotos((prev) => {
               const updated = prev.map((p) => (p.id === updatedRow.id ? updatedRow : p));
-              savePhotosCache(updated);
               return updated;
             });
           } else if (payload.eventType === "DELETE") {
             const deletedId = (payload.old as PhotoRow).id;
             setPhotos((prev) => {
               const updated = prev.filter((p) => p.id !== deletedId);
-              savePhotosCache(updated);
               return updated;
             });
           }
@@ -209,7 +120,7 @@ export function DataPage() {
       .subscribe();
 
     return () => { defaultSupabase.removeChannel(channel); };
-  }, [isAuthenticated, resolvePhotoUrl]);
+  }, [isAuthenticated]);
 
   // Logout handler
   const handleLogout = async () => {
@@ -255,20 +166,9 @@ export function DataPage() {
 
       if (dbError) throw dbError;
 
-      // 3. Remove from OPFS cache and revoke blob URL
-      if (row.photo_id) {
-        await removePhotoFromCache(row.photo_id);
-        const blobUrl = photoUrls[row.photo_id];
-        if (blobUrl?.startsWith("blob:")) {
-          URL.revokeObjectURL(blobUrl);
-          blobUrlsRef.current = blobUrlsRef.current.filter((u) => u !== blobUrl);
-        }
-      }
-
       // Update state + localStorage cache
       setPhotos((prev) => {
         const updated = prev.filter((p) => p.id !== row.id);
-        savePhotosCache(updated);
         return updated;
       });
     } catch (err: unknown) {
@@ -319,11 +219,6 @@ export function DataPage() {
     }
     // Silent refresh to catch any email_sent_at updates missed by Realtime
     fetchPhotos(true);
-  };
-
-  // Get cached signed URL (synchronous — URLs are pre-fetched by loadPhotoUrls)
-  const getPhotoUrl = (photoId: string): string => {
-    return photoUrls[photoId] ?? "";
   };
 
   // Export to CSV
@@ -605,31 +500,6 @@ export function DataPage() {
                       #{row.id}
                     </td>
 
-                    {/* Photo Thumbnail */}
-                    <td className="py-4 px-6">
-                      {row.photo_id ? (
-                        <div
-                          className="w-16 h-12 rounded-lg bg-neutral-950 border border-neutral-800 overflow-hidden cursor-pointer relative group-hover:border-neutral-700 transition-all flex items-center justify-center hover:scale-105 active:scale-95 shadow-md"
-                          onClick={() => setPreviewPhotoUrl(getPhotoUrl(row.photo_id))}
-                          title="Agrandir l'image"
-                        >
-                          <img
-                            src={getPhotoUrl(row.photo_id)}
-                            alt="Visiteur"
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Search className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-16 h-12 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-600">
-                          <Image className="w-5 h-5" />
-                        </div>
-                      )}
-                    </td>
-
                     {/* Email */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
@@ -738,18 +608,6 @@ export function DataPage() {
                             <MailIcon className="w-4 h-4" />
                           )}
                         </Button>
-                        {row.photo_id && (
-                          <a
-                            href={getPhotoUrl(row.photo_id)}
-                            download={`photo_${row.id}.png`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="bg-neutral-950/60 hover:bg-neutral-900 border border-neutral-850 p-2 rounded-xl text-neutral-400 hover:text-neutral-200 transition-colors shadow-sm"
-                            title="Télécharger l'image HD"
-                          >
-                            <Download className="w-4 h-4" />
-                          </a>
-                        )}
 
                         <Button
                           variant="destructive"
@@ -775,37 +633,6 @@ export function DataPage() {
         </div>
       </Card>
 
-      {/* Photo Lightbox Preview Modal */}
-      {previewPhotoUrl && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setPreviewPhotoUrl(null)}
-        >
-          <div className="relative max-w-4xl w-full flex flex-col items-center max-h-[90vh]">
-            <button
-              onClick={() => setPreviewPhotoUrl(null)}
-              className="absolute -top-12 right-0 text-neutral-400 hover:text-white flex items-center gap-1 text-sm font-semibold hover:underline"
-            >
-              Fermer <X className="w-5 h-5 inline-block" />
-            </button>
-            <img
-              src={previewPhotoUrl}
-              alt="Agrandissement"
-              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-neutral-800 animate-in zoom-in-95 duration-200"
-            />
-            <div className="mt-4 flex gap-3">
-              <a
-                href={previewPhotoUrl}
-                download="photo_photobooth.png"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Download className="w-4 h-4" /> Télécharger Haute Résolution
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
